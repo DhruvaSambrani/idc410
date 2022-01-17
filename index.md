@@ -1,3 +1,5 @@
 # Index
 
-No content here
+
+[[2022-01-11]]
+
