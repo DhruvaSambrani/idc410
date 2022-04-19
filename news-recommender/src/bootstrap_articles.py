@@ -58,6 +58,8 @@ all_articles.extend(bbc_articles)
 all_articles.extend(cipherbrief)
 all_articles.extend(cnn_articles)
 all_articles = list(map(articles.Article, all_articles))
+
+
 list(map(lambda i: i.vectorize(all_articles), all_articles))
 print(all(list(map(lambda i: i.save(), all_articles))))
 

@@ -56,3 +56,12 @@ def get_article(linkhash):
     a.from_row(rows[0])
     return a
 
+def get_all_articles():
+    rows = database.exec_select("SELECT * FROM articles", ())
+    def f(row):
+        a = Article()
+        a.from_row(row)
+        return a
+    return np.array(map(f, rows))
+
+

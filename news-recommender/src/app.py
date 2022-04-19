@@ -2,8 +2,12 @@ from flask import Flask, request, redirect, render_template
 import users
 import sessions
 import articles
-import models
+import model
+import numpy as np
+
 app =  Flask("News Recommender")
+my_model = model.Model(25, 2, 0.85, np.log(2)/4, list(range(10)))
+my_model.train(articles.get_all_articles())
 
 @app.route("/")
 def index():
@@ -38,10 +42,10 @@ def user(sessionid):
     user=users.getuser(session[2])
     if user is None:
         return "Invalid User. Please signup"
-    article_list = models.recommend(user)
+    article_list = my_model.recommend(user, articles.get_all_articles())
     sessions.add_event(sessionid, "LIST", user.un)
     return render_template(
-        "user.html", 
+        "user.html",
         user=user,
         session=session,
         article_1=article_list[::2],
