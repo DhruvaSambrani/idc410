@@ -1,55 +1,58 @@
 import numpy as np
+import database
+import nltk.tokenize as nltkt
+import nltk.corpus as nltkc
+import nltk.stem as nltks
 
 class Article:
-    def __init__(self, date_published, link, title, authors, summary):
-        self.date_published = date_published
-        self.link = link
-        self.title = title
-        self.authors = authors
-        self.summary = summary
-        self.vector = self.vectorize()
-
-    def vectorize(self):
-        return np.ones(25)
-
-    def short_summary(self):
-        return self.summary[:100]+"..."
-
-def recommend(user):
-    return [
-        Article(
-            1649701504,
-            "https://duckduckgo.org",
-            "As usual, someone started a War with someone",
-            "Dhruva Sambrani",
-            """Quaerat magnam corporis consequatur commodi. Sunt labore quas tempore qui sunt soluta. Est qui aliquid velit laboriosam. Iste recusandae sit molestiae voluptatem inventore.
-
-Ut est repellendus repellendus similique. Ex eligendi earum consequatur magni. Sapiente ea expedita voluptatem ea.
-
-Quos temporibus optio dolorem doloribus incidunt ea quibusdam et. Doloremque fugiat culpa fugiat eum. Ipsam recusandae fuga voluptate excepturi quae illum. Et cumque aspernatur minima quo. Qui reiciendis accusantium consequuntur. Quibusdam dolor dolorem et facere quis et.
-
-Sunt et non quaerat quisquam. Veniam nesciunt quos vero velit vel eos totam. Rem animi facilis recusandae et. Quia doloribus ipsa ipsam quibusdam a blanditiis quo sit. Incidunt aperiam ratione aliquam dolorem natus voluptas aut.
-
-Aut illum nihil velit similique ratione quidem. Laborum voluptatem culpa in ducimus sit eum expedita. Ut facere minima et quisquam. Non repudiandae animi sunt. Eum et quaerat corrupti pariatur amet tempore.
-Lorem Ipsum"""
+    def __init__(self, a=None):
+        if a != None:
+            a.nlp()
+            self.title = a.title
+            self.text = a.text
+            self.summary = a.summary
+            self.pubDate = a.publish_date
+            self.link = a.canonical_link
+            self.hash = a.link_hash
+            self.author = ", ".join(a.authors)
+            self.vector = None
+            self.preprocess()
+    
+    def save(self):
+        return database.insert_into(
+            "articles",
+            ("title", "text", "summary", "pubDate", "link", "hash", "author", "data_text", "vector"),
+            (self.title, self.text, self.summary, self.pubDate, self.hash, self.author,
+             self.data_text, None if self.vector==None else self.vector.tobytes())
         )
-        for _ in range(20)
-    ]
 
-def get_article(title):
-    return Article(
-            1649701504,
-            "https://duckduckgo.org",
-            "As usual, someone started a War with someone",
-            "Dhruva Sambrani",
-            """Quaerat magnam corporis consequatur commodi. Sunt labore quas tempore qui sunt soluta. Est qui aliquid velit laboriosam. Iste recusandae sit molestiae voluptatem inventore.
+    def preprocess(self):
+        self.data_text  = self.text.lower()
+        #Tokenize
+        word_tokens_summary = nltkt.word_tokenize(self.data_text)
+        #Lemmetize
+        lemmatizer = nltks.WordNetLemmatizer()
+        lemmatized_output_sum = ' '.join([lemmatizer.lemmatize(w) for w in word_tokens_summary])
+        #Stopwords
+        stop_words = set(nltkc.stopwords.words('english'))
+        word_tokens_summary = nltkt.word_tokenize(lemmatized_output_sum)
+        filtered_sentence_sum = [w for w in word_tokens_summary if not w.lower() in stop_words]
+        self.data_text = " ".join(filtered_sentence_sum)
 
-Ut est repellendus repellendus similique. Ex eligendi earum consequatur magni. Sapiente ea expedita voluptatem ea.
+    def from_row(self, row):
+        self.title = row[0]
+        self.date = row[1]
+        self.text = row[2]
+        self.data_text = row[3]
+        self.summary = row[4]
+        self.author = row[5]
+        self.link = row[6]
+        self.hash = row[7]
+        self.vector = None if row[8]==None else np.frombuffer(row[8]).copy()
 
-Quos temporibus optio dolorem doloribus incidunt ea quibusdam et. Doloremque fugiat culpa fugiat eum. Ipsam recusandae fuga voluptate excepturi quae illum. Et cumque aspernatur minima quo. Qui reiciendis accusantium consequuntur. Quibusdam dolor dolorem et facere quis et.
+def get_article(linkhash):
+    rows = database.exec_select("SELECT * FROM articles WHERE linkhash=?", (linkhash,))
+    a = Article()
+    a.from_row(rows[0])
+    return a
 
-Sunt et non quaerat quisquam. Veniam nesciunt quos vero velit vel eos totam. Rem animi facilis recusandae et. Quia doloribus ipsa ipsam quibusdam a blanditiis quo sit. Incidunt aperiam ratione aliquam dolorem natus voluptas aut.
-
-Aut illum nihil velit similique ratione quidem. Laborum voluptatem culpa in ducimus sit eum expedita. Ut facere minima et quisquam. Non repudiandae animi sunt. Eum et quaerat corrupti pariatur amet tempore.
-Lorem Ipsum"""
-        )

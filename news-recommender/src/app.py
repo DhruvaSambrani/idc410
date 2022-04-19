@@ -2,7 +2,7 @@ from flask import Flask, request, redirect, render_template
 import users
 import sessions
 import articles
-
+import models
 app =  Flask("News Recommender")
 
 @app.route("/")
@@ -38,7 +38,7 @@ def user(sessionid):
     user=users.getuser(session[2])
     if user is None:
         return "Invalid User. Please signup"
-    article_list = articles.recommend(user)
+    article_list = models.recommend(user)
     sessions.add_event(sessionid, "LIST", user.un)
     return render_template(
         "user.html", 
@@ -61,10 +61,10 @@ def delses(sessionid):
     sessions.stop_session(sessionid)
     return redirect("/")
 
-@app.route("/article/<sessionid>/<article_title>")
-def show_article(sessionid, article_title):
+@app.route("/article/<sessionid>/<article_hash>")
+def show_article(sessionid, article_hash):
     sess = sessions.getsession(sessionid)
     if sess is None:
         return "Invalid Session, login again"
-    sessions.add_event(sessionid, "READ", article_title)
-    return render_template("article.html", article=articles.get_article(article_title), session=sess)
+    sessions.add_event(sessionid, "READ", article_hash)
+    return render_template("article.html", article=articles.get_article(article_hash), session=sess)

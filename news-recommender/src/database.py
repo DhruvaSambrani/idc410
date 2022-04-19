@@ -37,7 +37,8 @@ def insert_into(tblname, keys, values):
         cur.close()
         commit()
         return True
-    except: 
+    except e:
+        print(e)
         return False
 
 def exec_select(query, vals):
