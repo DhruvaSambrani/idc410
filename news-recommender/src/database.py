@@ -7,21 +7,7 @@ CONN = None
 def get_cursor():
     global CONN
     if CONN is None:
-        def adapt_array(arr):
-            print("====================")
-            out = io.BytesIO()
-            np.save(out, arr)
-            out.seek(0)
-            return sqlite3.Binary(out.read())
-        def convert_array(text):
-            print("********************")
-            out = io.BytesIO(text)
-            out.seek(0)
-            return np.load(out)
-        sqlite3.register_adapter(np.ndarray, adapt_array)
-        sqlite3.register_converter("array", convert_array)
-
-        CONN = sqlite3.connect("news-recommender.db", detect_types=sqlite3.PARSE_DECLTYPES)
+        CONN = sqlite3.connect("news-recommender.db", check_same_thread=False)
     return CONN.cursor()
 
 def commit():
@@ -37,7 +23,7 @@ def insert_into(tblname, keys, values):
         cur.close()
         commit()
         return True
-    except e:
+    except BaseException as e:
         print(e)
         return False
 

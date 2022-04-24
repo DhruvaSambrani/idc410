@@ -15,9 +15,9 @@ def user_from_prefs(u):
     i, pref = u
     name = f"user{i}"
     print("Building user", i)
-    user = users.User(name, name, name, pref)
+    user = users.User(name, name, name, pref, np.random.randint(35, 60))
     user.into_database()
 
-list(map(user_from_prefs, enumerate(synthetic_user_prefs(400, 10, 25, 2.5, 0.25))))
+list(map(user_from_prefs, enumerate(synthetic_user_prefs(100, 10, 25, 55, 30))))
 
 
